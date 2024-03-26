@@ -78,6 +78,12 @@ public class TeleOp_Control extends OpMode {
 
         robot.MotorConveyer.setPower(PowerFirst + PowerSecond);
 
+        if (robot.digitalTouch.getState() == false) {
+            telemetry.addData("Button", "PRESSED");
+        }
+
+        telemetry.update();
+
         if(gamepad1.dpad_up){
             slow();
             //podves_up();
@@ -158,6 +164,7 @@ public class TeleOp_Control extends OpMode {
         robot.MotorLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.MotorLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
+    void stop_lift(){}
 
     void high_position(){
         robot.MotorLift.setVelocity(900);

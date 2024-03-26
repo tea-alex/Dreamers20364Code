@@ -5,6 +5,7 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -34,6 +35,7 @@ public class Config_robot {
     public Servo Box;
     public Servo Airplane;
     public DcMotorEx MotorSelfDestruction = null;
+    DigitalChannel digitalTouch;
 
     public Config_robot(){
 
@@ -44,6 +46,10 @@ public class Config_robot {
         hardM = hMap;
 
         imu = hMap.get(BNO055IMU.class, "imu");
+
+        digitalTouch = hardM.get(DigitalChannel.class, "digitalTouch");
+
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
