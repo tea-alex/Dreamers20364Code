@@ -164,9 +164,9 @@ public class AutoRED extends LinearOpMode {
         sleep(500);
         servoClose();
         sleep(500);
-        turnToHeadingMecanum(0.3, 90);
+        turnToHeadingMecanum(0.3, -90);
         sleep(500);
-        driveStraight(0.5, 18, 0);
+        driveStraight(0.5, 12, 0);
         sleep(500);
         lift_up();
         sleep(500);
@@ -415,10 +415,10 @@ public class AutoRED extends LinearOpMode {
     }
     public void lift_up(){
         robot.MotorLift.setVelocity(900);
-        robot.MotorLift.setTargetPosition(900);
+        robot.MotorLift.setTargetPosition(-900);
     }
     public void lift_down(){
         robot.MotorLift.setVelocity(900);
-        robot.MotorLift.setTargetPosition(4);
+        robot.MotorLift.setTargetPosition(-5);
     }
 }

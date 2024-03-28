@@ -94,19 +94,21 @@ public class ObjectDetection extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            while (opModeIsActive()) {
+         //   while (opModeIsActive()) {
 
                 telemetryTfod();
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
-
+/*
                 // Save CPU resources; can resume streaming when needed.
                 if (gamepad1.dpad_down) {
                     visionPortal.stopStreaming();
                 } else if (gamepad1.dpad_up) {
                     visionPortal.resumeStreaming();
                 }
+
+ */
 
                 // Share the CPU.
                 sleep(20);
@@ -125,12 +127,13 @@ public class ObjectDetection extends LinearOpMode {
                     AUTONOM_CENTER();
                 }
             }
+//        visionPortal.close();
         }
 
         // Save more CPU resources when camera is no longer needed.
-        visionPortal.close();
+ //       visionPortal.close();
 
-    }   // end runOpMode()
+ //   }   // end runOpMode()
 
     /**
      * Initialize the TensorFlow Object Detection processor.
@@ -227,18 +230,22 @@ public class ObjectDetection extends LinearOpMode {
             if (x > 427 && x < 854) {
                 route = 2;
                 telemetry.addData("# Autonom center", route);
+                telemetry.update();
             }
             if (x < 427){
                 route = 1;
                 telemetry.addData("# Autonom left", route);
+                telemetry.update();
             }
             if (x > 854){
                 route = 3;
                 telemetry.addData("# Autonom right", route);
+                telemetry.update();
             }
             else{
                 route = 2;
                 telemetry.addData("# no detect", route);
+                telemetry.update();
             }
         }
 
@@ -253,18 +260,13 @@ public class ObjectDetection extends LinearOpMode {
         sleep(500);
         servoClose();
         sleep(500);
-        turnToHeadingMecanum(0.3, 90);
-        sleep(500);
-        driveStraight(0.5, 18, 0);
-        sleep(500);
-        /*
-        driveStraight(0.5,10,0);
-        sleep(500);
         turnToHeadingMecanum(0.3, -90);
         sleep(500);
-        driveStraight(0.5, -22,0);
-         */
-        resetHeading();
+        driveStraight(0.5, -18, 0);
+        sleep(500);
+        lift_up();
+        sleep(500);
+        lift_down();
         sleep(500);
         off_motor();
     }
@@ -449,7 +451,7 @@ public class ObjectDetection extends LinearOpMode {
     }
     public void lift_up(){
         robot.MotorLift.setVelocity(900);
-        robot.MotorLift.setTargetPosition(1200);
+        robot.MotorLift.setTargetPosition(-1200);
     }
     public void lift_down(){
         robot.MotorLift.setVelocity(900);
