@@ -1,46 +1,58 @@
 package org.firstinspires.ftc.teamcode;
 
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.opencv.core.Scalar;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-@Autonomous(name="Auto_RED", group="Auto")
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 
+import java.util.List;
 
-public class AutoRED extends LinearOpMode {
+/*
+ * This OpMode illustrates the basics of TensorFlow Object Detection,
+ * including Java Builder structures for specifying Vision parameters.
+ *
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
+ */
+@Autonomous(name = "TensorFlow BLUE")
+
+public class ObjectDetectionBlue extends LinearOpMode {
     Config_robot robot = new Config_robot();
-    private OpenCvCamera webcam;
+    public double route = 0;
 
-    private static final int CAMERA_WIDTH = 1280;
-    private static final int CAMERA_HEIGHT = 720;
+    private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
-    private double CrLowerUpdate = 160;
-    private double CbLowerUpdate = 100;
-    private double CrUpperUpdate = 255;
-    private double CbUpperUpdate = 255;
+    // TFOD_MODEL_ASSET points to a model file stored in the project Asset location,
+    // this is only used for Android Studio when using models in Assets.
+    private static final String TFOD_MODEL_ASSET = "BLUE.tflite"; //private static final String TFOD_MODEL_ASSET = "CenterStage.tflite";
+    // TFOD_MODEL_FILE points to a model file stored onboard the Robot Controller's storage,
+    // this is used when uploading models directly to the RC using the model upload interface.
+    private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/myCustomModel.tflite";
+    // Define the labels recognized in the model for TFOD (must be in training order!)
+    private static final String[] LABELS = {
+            "BLUE",// "Pixel",
+    };
 
-    public static double borderLeftX = 0.0;   //fraction of pixels from the left side of the cam to skip
-    public static double borderRightX = 0.0;   //fraction of pixels from the right of the cam to skip
-    public static double borderTopY = 0.0;   //fraction of pixels from the top of the cam to skip
-    public static double borderBottomY = 0.0;   //fraction of pixels from the bottom of the cam to skip
+    /**
+     * The variable to store our instance of the TensorFlow Object Detection processor.
+     */
+    private TfodProcessor tfod;
 
-    private double lowerruntime = 0;
-    private double upperruntime = 0;
-
-    // Pink Range                                      Y      Cr     Cb
-    public static Scalar scalarLowerYCrCb = new Scalar(0.0, 160.0, 100.0);
-    public static Scalar scalarUpperYCrCb = new Scalar(255.0, 255.0, 255.0);
+    /**
+     * The variable to store our instance of the vision portal.
+     */
+    private VisionPortal visionPortal;
 
     static final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
     static final double DRIVE_GEAR_REDUCTION = 2.0;     // No External Gearing.
@@ -67,129 +79,218 @@ public class AutoRED extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // OpenCV webcam
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        //OpenCV Pipeline
-        ContourPipeline myPipeline;
-        webcam.setPipeline(myPipeline = new ContourPipeline(borderLeftX, borderRightX, borderTopY, borderBottomY));
-        // Configuration of Pipeline
-        myPipeline.configureScalarLower(scalarLowerYCrCb.val[0], scalarLowerYCrCb.val[1], scalarLowerYCrCb.val[2]);
-        myPipeline.configureScalarUpper(scalarUpperYCrCb.val[0], scalarUpperYCrCb.val[1], scalarUpperYCrCb.val[2]);
-        // Webcam Streaming
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-            @Override
-            public void onOpened() {
-                webcam.startStreaming(CAMERA_WIDTH, CAMERA_HEIGHT, OpenCvCameraRotation.UPRIGHT);
-            }
 
-            @Override
-            public void onError(int errorCode) {
-                /*
-                 * This will be called if the camera could not be opened
-                 */
-            }
-        });
+        initTfod();
 
+        //detect();
+
+        // Wait for the DS start button to be touched.
+        telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
+        telemetry.addData(">", "Touch Play to start OpMode");
         telemetry.update();
+
         robot.init_Auto(hardwareMap);
         waitForStart();
 
-        //      while (opModeIsActive()) {
-        myPipeline.configureBorders(borderLeftX, borderRightX, borderTopY, borderBottomY);
-        if (myPipeline.error) {
-            telemetry.addData("Exception: ", myPipeline.debug);
+        if (opModeIsActive()) {
+         //   while (opModeIsActive()) {
+
+                telemetryTfod();
+
+                // Push telemetry to the Driver Station.
+                telemetry.update();
+/*
+                // Save CPU resources; can resume streaming when needed.
+                if (gamepad1.dpad_down) {
+                    visionPortal.stopStreaming();
+                } else if (gamepad1.dpad_up) {
+                    visionPortal.resumeStreaming();
+                }
+
+ */
+
+                // Share the CPU.
+                sleep(20);
+
+                if (route == 1){
+                    AUTONOM_LEFT();
+                }
+                else if (route == 2){
+                    AUTONOM_CENTER();
+                }
+
+                else if (route == 3){
+                    AUTONOM_RIGHT();
+                }
+                else{
+                    AUTONOM_CENTER();
+                }
+            }
+//        visionPortal.close();
         }
-        // Only use this line of the code when you want to find the lower and upper values
-        testing(myPipeline);
 
-        telemetry.addData("RectArea: ", myPipeline.getRectArea());
-        telemetry.update();
+        // Save more CPU resources when camera is no longer needed.
+ //       visionPortal.close();
 
-        if (myPipeline.getRectArea() > 2000) {
-            if (myPipeline.getRectMidpointX() > 1066) {
-                AUTONOMOUS_RIGHT(); // right
-            } else if (myPipeline.getRectMidpointX() < 213) {
-                AUTONOMOUS_LEFT(); // left
-            } else {
-                AUTONOMOUS_CENTER();
+ //   }   // end runOpMode()
+
+    /**
+     * Initialize the TensorFlow Object Detection processor.
+     */
+    private void initTfod() {
+
+        // Create the TensorFlow processor by using a builder.
+        tfod = new TfodProcessor.Builder()
+
+                // With the following lines commented out, the default TfodProcessor Builder
+                // will load the default model for the season. To define a custom model to load,
+                // choose one of the following:
+                //   Use setModelAssetName() if the custom TF Model is built in as an asset (AS only).
+                //   Use setModelFileName() if you have downloaded a custom team model to the Robot Controller.
+                .setModelAssetName(TFOD_MODEL_ASSET)
+                //.setModelFileName(TFOD_MODEL_FILE)
+
+                // The following default settings are available to un-comment and edit as needed to
+                // set parameters for custom models.
+                .setModelLabels(LABELS)
+                //.setIsModelTensorFlow2(true)
+                //.setIsModelQuantized(true)
+                //.setModelInputSize(300)
+                //.setModelAspectRatio(16.0 / 9.0)
+
+                .build();
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        // Set the camera (webcam vs. built-in RC phone camera).
+        if (USE_WEBCAM) {
+            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        } else {
+            builder.setCamera(BuiltinCameraDirection.BACK);
+        }
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        //builder.setCameraResolution(new Size(640, 480));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableLiveView(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(tfod);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Set confidence threshold for TFOD recognitions, at any time.
+        //tfod.setMinResultConfidence(0.75f);
+
+        // Disable or re-enable the TFOD processor at any time.
+        //visionPortal.setProcessorEnabled(tfod, true);
+
+    }   // end method initTfod()
+
+    /**
+     * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
+     */
+    private void telemetryTfod() {
+
+        List<Recognition> currentRecognitions = tfod.getRecognitions();
+        telemetry.addData("# Objects Detected", currentRecognitions.size());
+
+        // Step through the list of recognitions and display info for each one.
+        for (Recognition recognition : currentRecognitions) {
+            double x = (recognition.getLeft() + recognition.getRight()) / 2;
+            double y = (recognition.getTop() + recognition.getBottom()) / 2;
+
+            telemetry.addData("", " ");
+            telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+            telemetry.addData("- Position", "%.0f / %.0f", x, y);
+            telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+
+            if (x > 180 && x < 540) {
+                route = 2;
+            }
+
+            else if (x < 180){
+                route = 1;
+            }
+            else if (x > 540){
+                route = 3;
+            }
+            else{
+                route = 2;
+            }
+        }   // end for() loop
+
+    }   // end method telemetryTfod()
+/*
+    private void detect() {
+        List<Recognition> currentRecognitions = tfod.getRecognitions();
+
+        // Step through the list of recognitions and display info for each one.
+        for (Recognition recognition : currentRecognitions) {
+            double x = (recognition.getLeft() + recognition.getRight()) / 2;
+            double y = (recognition.getTop() + recognition.getBottom()) / 2;
+            if (x > 427 && x < 854) {
+                route = 2;
+            }
+            else if (x < 427){
+                route = 1;
+            }
+            else if (x > 854){
+                route = 3;
+            }
+            else{
+                route = 2;
             }
         }
-        //       }
+
     }
 
-    public void testing(ContourPipeline myPipeline) {
-        if (lowerruntime + 0.05 < getRuntime()) {
-            CrLowerUpdate += -gamepad1.left_stick_y;
-            CbLowerUpdate += gamepad1.left_stick_x;
-            lowerruntime = getRuntime();
-        }
-        if (upperruntime + 0.05 < getRuntime()) {
-            CrUpperUpdate += -gamepad1.right_stick_y;
-            CbUpperUpdate += gamepad1.right_stick_x;
-            upperruntime = getRuntime();
-        }
+ */
 
-        CrLowerUpdate = inValues(CrLowerUpdate, 0, 255);
-        CrUpperUpdate = inValues(CrUpperUpdate, 0, 255);
-        CbLowerUpdate = inValues(CbLowerUpdate, 0, 255);
-        CbUpperUpdate = inValues(CbUpperUpdate, 0, 255);
-
-        myPipeline.configureScalarLower(0.0, CrLowerUpdate, CbLowerUpdate);
-        myPipeline.configureScalarUpper(255.0, CrUpperUpdate, CbUpperUpdate);
-
-        telemetry.addData("lowerCr ", (int) CrLowerUpdate);
-        telemetry.addData("lowerCb ", (int) CbLowerUpdate);
-        telemetry.addData("UpperCr ", (int) CrUpperUpdate);
-        telemetry.addData("UpperCb ", (int) CbUpperUpdate);
-    }
-
-    public Double inValues(double value, double min, double max) {
-        if (value < min) {
-            value = min;
-        }
-        if (value > max) {
-            value = max;
-        }
-        return value;
-    }
-
-    public void AUTONOMOUS_CENTER() {
-        telemetry.addLine("Center");
-        telemetry.update();
+    void AUTONOM_CENTER(){
 
         driveStraight(0.5, -12, 0);
         sleep(500);
         servoOpen();
         sleep(500);
-        driveStraight(0.5,12,0);
+        driveStraight(0.5,2,0);
         sleep(500);
         servoClose();
         sleep(500);
+        turnToHeadingMecanum(0.3, -75);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.3,-20, 0);
+        sleep(500);
+
+        /*
         turnToHeadingMecanum(0.3, -90);
         sleep(500);
         driveStraight(0.5, -18, 0);
         sleep(500);
 
-
-
-        /*
-        driveStraight(0.5,10,0);
+        lift_up();
         sleep(500);
-        turnToHeadingMecanum(0.3, -90);
-        sleep(500);
-        driveStraight(0.5, -22,0);
+        lift_down();
+
          */
+        sleep(500);
         off_motor();
     }
-
-    public void AUTONOMOUS_LEFT() {
-        telemetry.addLine("Auto Left");
-        telemetry.update();
-        /*
-
-         */
-
+    void AUTONOM_LEFT(){
+    /*
         driveStraight(0.5, -12, 0);
         sleep(500);
         turnToHeadingMecanum(0.5,75);
@@ -200,25 +301,29 @@ public class AutoRED extends LinearOpMode {
         sleep(500);
         driveStraight(0.3,3,0);
         sleep(500);
-        /*
         turnToHeadingMecanum(0.3, 0);
         sleep(500);
-        driveStraight(0.5,10,0);
+        resetHeading();
         sleep(500);
-        turnToHeadingMecanum(0.3, -90);
+        driveStraight(0.5, 12, 0);
         sleep(500);
-        driveStraight(0.5, -18,0);
+        resetHeading();
+        sleep(500);
+        turnToHeadingMecanum(0.3, -75);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.3,-20, 0);
+        sleep(500);
          */
+        sleep(500);
         off_motor();
-
     }
 
-    public void AUTONOMOUS_RIGHT() {
-        telemetry.addLine("Auto Right");
-        telemetry.update();
-        /*
+    void AUTONOM_RIGHT(){
 
-        driveStraight(0.5, -12, 0);
+        /*
+                driveStraight(0.5, -12, 0);
         sleep(500);
         turnToHeadingMecanum(0.5,-75);
         sleep(500);
@@ -227,22 +332,24 @@ public class AutoRED extends LinearOpMode {
         sleep(500);
         driveStraight(0.3,3,0);
         sleep(500);
-
-         */
-
-        /*
         turnToHeadingMecanum(0.3, 0);
         sleep(500);
-        driveStraight(0.5,10,0);
+        resetHeading();
         sleep(500);
-        turnToHeadingMecanum(0.3, -90);
+        driveStraight(0.5, 12, 0);
         sleep(500);
-        driveStraight(0.5, -16,0);
-
+        resetHeading();
+        sleep(500);
+        turnToHeadingMecanum(0.3, -75);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.3,-20, 0);
+        sleep(500);
          */
+        sleep(500);
         off_motor();
     }
-
     public void driveStraight(double maxDriveSpeed, double distance, double heading) {
 
         // Ensure that the opmode is still active
@@ -421,11 +528,11 @@ public class AutoRED extends LinearOpMode {
         robot.Box.setPosition(0.5);
     }
     public void lift_up(){
-        robot.MotorLift.setPower(0.5);
-        robot.MotorLift.setTargetPosition(-900);
+        robot.MotorLift.setVelocity(900);
+        robot.MotorLift.setTargetPosition(-1200);
     }
     public void lift_down(){
-        robot.MotorLift.setPower(0.5);
-        robot.MotorLift.setTargetPosition(-5);
-    }
-}
+        robot.MotorLift.setVelocity(900);
+        robot.MotorLift.setTargetPosition(4);}
+}// end class
+

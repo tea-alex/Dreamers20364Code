@@ -78,19 +78,16 @@ public class TeleOp_Control extends OpMode {
 
         robot.MotorConveyer.setPower(PowerFirst + PowerSecond);
 
-/*
+
         if (robot.digitalTouch.getState() == false) {
             telemetry.addData("Button", "PRESSED");
-
             robot.MotorLift.setVelocity(900);
-            robot.MotorLift.setTargetPosition(1200);
-
-
+            robot.MotorLift.setTargetPosition(robot.MotorLift.getTargetPosition() + 5);
         }
-*/
+
         telemetry.update();
 
-        if(gamepad1.dpad_up){
+        if(gamepad1.y){
             slow();
             //podves_up();
             /*
@@ -99,27 +96,27 @@ public class TeleOp_Control extends OpMode {
              */
         }
 
-        if(gamepad1.a){
+        if(gamepad1.dpad_down){
             turnToHeadingMecanum(0.9, -90);
         }
-        if(gamepad1.b){
+        if(gamepad1.dpad_left){
             turnToHeadingMecanum(0.9, 180);
         }
-        if(gamepad1.x){
+        if(gamepad1.dpad_right){
             turnToHeadingMecanum(0.9, 0);
         }
-        if(gamepad1.y){
+        if(gamepad1.dpad_up){
             turnToHeadingMecanum(0.9, 90);
         }
 
 
-        if(gamepad2.dpad_up){
-            robot.MotorLift.setVelocity(900);
-            robot.MotorLift.setTargetPosition(robot.MotorLift.getTargetPosition() - 70);
-        }
         if(gamepad2.dpad_down){
             robot.MotorLift.setVelocity(900);
-            robot.MotorLift.setTargetPosition(robot.MotorLift.getTargetPosition() + 70);
+            robot.MotorLift.setTargetPosition(robot.MotorLift.getTargetPosition() - 35);
+        }
+        if(gamepad2.dpad_up){
+            robot.MotorLift.setVelocity(900);
+            robot.MotorLift.setTargetPosition(robot.MotorLift.getTargetPosition() + 35);
         }
         if(gamepad2.a){
             high_position();

@@ -46,13 +46,13 @@ public class Config_robot {
         hardM = hMap;
 
         imu = hMap.get(BNO055IMU.class, "imu");
-        /*
+
 
         digitalTouch = hardM.get(DigitalChannel.class, "digitalTouch");
 
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT); поменять стрелки и кнопки местами
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
-         */
+
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;

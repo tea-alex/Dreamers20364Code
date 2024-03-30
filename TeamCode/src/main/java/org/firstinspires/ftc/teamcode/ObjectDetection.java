@@ -26,7 +26,7 @@ import java.util.List;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@Autonomous(name = "Concept: TensorFlow Object Detection", group = "Concept")
+@Autonomous(name = "TensorFlow RED")
 
 public class ObjectDetection extends LinearOpMode {
     Config_robot robot = new Config_robot();
@@ -36,13 +36,13 @@ public class ObjectDetection extends LinearOpMode {
 
     // TFOD_MODEL_ASSET points to a model file stored in the project Asset location,
     // this is only used for Android Studio when using models in Assets.
-    private static final String TFOD_MODEL_ASSET = "CenterStage.tflite";
+    private static final String TFOD_MODEL_ASSET = "RED.tflite"; //private static final String TFOD_MODEL_ASSET = "CenterStage.tflite";
     // TFOD_MODEL_FILE points to a model file stored onboard the Robot Controller's storage,
     // this is used when uploading models directly to the RC using the model upload interface.
     private static final String TFOD_MODEL_FILE = "/sdcard/FIRST/tflitemodels/myCustomModel.tflite";
     // Define the labels recognized in the model for TFOD (must be in training order!)
     private static final String[] LABELS = {
-            "Pixel",
+            "RED",// "Pixel",
     };
 
     /**
@@ -83,7 +83,7 @@ public class ObjectDetection extends LinearOpMode {
 
         initTfod();
 
-        detect();
+        //detect();
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
@@ -216,10 +216,24 @@ public class ObjectDetection extends LinearOpMode {
             telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
             telemetry.addData("- Position", "%.0f / %.0f", x, y);
             telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+
+            if (x > 180 && x < 540) {
+                route = 2;
+            }
+
+            else if (x < 180){
+                route = 1;
+            }
+            else if (x > 540){
+                route = 3;
+            }
+            else{
+                route = 2;
+            }
         }   // end for() loop
 
     }   // end method telemetryTfod()
-
+/*
     private void detect() {
         List<Recognition> currentRecognitions = tfod.getRecognitions();
 
@@ -229,29 +243,24 @@ public class ObjectDetection extends LinearOpMode {
             double y = (recognition.getTop() + recognition.getBottom()) / 2;
             if (x > 427 && x < 854) {
                 route = 2;
-                telemetry.addData("# Autonom center", route);
-                telemetry.update();
             }
-            if (x < 427){
+            else if (x < 427){
                 route = 1;
-                telemetry.addData("# Autonom left", route);
-                telemetry.update();
             }
-            if (x > 854){
+            else if (x > 854){
                 route = 3;
-                telemetry.addData("# Autonom right", route);
-                telemetry.update();
             }
             else{
                 route = 2;
-                telemetry.addData("# no detect", route);
-                telemetry.update();
             }
         }
 
     }
 
+ */
+
     void AUTONOM_CENTER(){
+
         driveStraight(0.5, -12, 0);
         sleep(500);
         servoOpen();
@@ -260,18 +269,88 @@ public class ObjectDetection extends LinearOpMode {
         sleep(500);
         servoClose();
         sleep(500);
+        turnToHeadingMecanum(0.3, -75);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.3,-20, 0);
+        sleep(500);
+
+        /*
         turnToHeadingMecanum(0.3, -90);
         sleep(500);
         driveStraight(0.5, -18, 0);
         sleep(500);
+
         lift_up();
         sleep(500);
         lift_down();
+
+         */
         sleep(500);
         off_motor();
     }
-    void AUTONOM_LEFT(){}
-    void AUTONOM_RIGHT(){}
+    void AUTONOM_LEFT(){
+    /*
+        driveStraight(0.5, -12, 0);
+        sleep(500);
+        turnToHeadingMecanum(0.5,75);
+        sleep(500);
+        driveStraight(0.3,-1.5,0);
+        sleep(500);
+        servoOpen();
+        sleep(500);
+        driveStraight(0.3,3,0);
+        sleep(500);
+        turnToHeadingMecanum(0.3, 0);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.5, 12, 0);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        turnToHeadingMecanum(0.3, -75);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.3,-20, 0);
+        sleep(500);
+         */
+        sleep(500);
+        off_motor();
+    }
+
+    void AUTONOM_RIGHT(){
+
+        /*
+                driveStraight(0.5, -12, 0);
+        sleep(500);
+        turnToHeadingMecanum(0.5,-75);
+        sleep(500);
+        driveStraight(0.5, -1.5, 0);
+        servoOpen();
+        sleep(500);
+        driveStraight(0.3,3,0);
+        sleep(500);
+        turnToHeadingMecanum(0.3, 0);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.5, 12, 0);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        turnToHeadingMecanum(0.3, -75);
+        sleep(500);
+        resetHeading();
+        sleep(500);
+        driveStraight(0.3,-20, 0);
+        sleep(500);
+         */
+        sleep(500);
+        off_motor();
+    }
     public void driveStraight(double maxDriveSpeed, double distance, double heading) {
 
         // Ensure that the opmode is still active
